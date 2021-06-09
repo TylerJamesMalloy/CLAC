@@ -59,6 +59,9 @@ def train(args):
             rewardDataPoint = {"Timestep": training_timestep , "Reward": mean_reward, "Model": arglist.model, "Environment": arglist.environment, "Training": training_type}
             rewardsDataFrame = rewardsDataFrame.append(rewardDataPoint, ignore_index=True)
 
+            if arglist.random_training: 
+                env.unwrapped.randomize()
+
         model.save(save_folder + "/" + arglist.agent)
     else:
         model = model.load(arglist.load_path)
@@ -77,12 +80,12 @@ def parse_args():
     parser.add_argument("--model", type=str, default="clac", help="model type to train on")
     parser.add_argument("--agent", type=str, default="a1", help="name of agent, for saving results")
     parser.add_argument("--training_ts", type=int, default=1000000, help="number of time steps to train on")
-    parser.add_argument("--training_evals", type=int, default=100, help="number of time steps to train on")
+    parser.add_argument("--training_evals", type=int, default=1000, help="number of time steps to train on")
     parser.add_argument("--random_training", action="store_true", default=False)
     parser.add_argument("--evaluate", action="store_true", default=False)
     parser.add_argument("--evaluate_es", type=int, default=100, help="number of time steps to evaluate trained model")
     parser.add_argument("--random_eval", action="store_true", default=False)
-    parser.add_argument("--device-type", type=str, default="cpu", help="one of cpu, cuda, xpu, mkldnn, opengl, opencl, ideep, hip, msnpu, xla, vulkan")
+    parser.add_argument("--device-type", type=str, default="cuda", help="one of cpu, cuda, xpu, mkldnn, opengl, opencl, ideep, hip, msnpu, xla, vulkan")
     parser.add_argument("--load", action="store_true", default=False) 
     parser.add_argument("--load_path", type=str, default=None, help="load path of model")
     #parser.add_argument("--coef_target", type=int, default='auto', help="target for coeficient training")
@@ -96,8 +99,9 @@ def parse_args():
 # python train.py --environment HopperPyBulletEnv-v0 --model sac --agent a1 --training_ts 1000000 --device-type cuda 
 # python train.py --environment AntPyBulletEnv-v0 --model sac --agent a1 --training_ts 3000000 --device-type cuda 
 
-# similar to reference: HopperPyBulletEnv-v0, AntPyBulletEnv-v0, ReacherPyBulletEnv-v0,   HumanoidPyBulletEnv-v0, HumanoidFlagrunPyBulletEnv-v0, HumanoidFlagrunHarderPyBulletEnv-v0
+# similar to reference: HopperPyBulletEnv-v0, AntPyBulletEnv-v0, ReacherPyBulletEnv-v0, PusherPyBulletEnv-v0,  HumanoidPyBulletEnv-v0, HumanoidFlagrunPyBulletEnv-v0, 
 # training time: 1M, 3M, 10M,  10M, 10M, 10M
+# python train.py --environment ReacherPyBulletEnv-v0 --model clac --agent a1 --training_ts 10000 --device-type cuda --random_training
 
 if __name__ == '__main__':
     arglist = parse_args()

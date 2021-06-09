@@ -148,7 +148,7 @@ class CLAC(OffPolicyAlgorithm):
         if self.target_mutual_information == "auto":
             # automatically set target mutual information if needed
             # make multiplier a argument? 
-            self.target_mutual_information = -8 * np.prod(self.env.action_space.shape).astype(np.float32) + np.prod(self.env.observation_space.shape).astype(np.float32)
+            self.target_mutual_information = -1 * (np.prod(self.env.action_space.shape).astype(np.float32) * np.prod(self.env.observation_space.shape).astype(np.float32))
         else:
             # Force conversion
             # this will also throw an error for unexpected string
@@ -157,7 +157,7 @@ class CLAC(OffPolicyAlgorithm):
         # The mutual information coefficient or mutual information can be learned automatically
         if isinstance(self.mi_coef, str) and self.mi_coef.startswith("auto"):
             # Default initial value of mi_coef when learned
-            init_value = 0.01
+            init_value = 1.0
             if "_" in self.mi_coef:
                 init_value = float(self.mi_coef.split("_")[1])
                 assert init_value > 0.0, "The initial value of mi_coef must be greater than 0"
