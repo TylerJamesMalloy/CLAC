@@ -29,10 +29,14 @@ def evaluate(model, env, arglist):
             episode_rewards.append(episode_reward)
             obs = env.reset()
             episode_reward = 0
+
+            if arglist.random_testing: 
+                env.unwrapped.randomize()
         
         if(len(episode_rewards) >= arglist.evaluate_es):
             doneEvaluating = True  
 
+    env.unwrapped.randomize() 
     return np.mean(episode_rewards)
 
 def train(args):
@@ -85,23 +89,24 @@ def parse_args():
     parser.add_argument("--evaluate", action="store_true", default=False)
     parser.add_argument("--evaluate_es", type=int, default=100, help="number of time steps to evaluate trained model")
     parser.add_argument("--random_eval", action="store_true", default=False)
-    parser.add_argument("--device-type", type=str, default="cuda", help="one of cpu, cuda, xpu, mkldnn, opengl, opencl, ideep, hip, msnpu, xla, vulkan")
+    parser.add_argument("--device_type", type=str, default="cuda", help="one of cpu, cuda, xpu, mkldnn, opengl, opencl, ideep, hip, msnpu, xla, vulkan")
     parser.add_argument("--load", action="store_true", default=False) 
     parser.add_argument("--load_path", type=str, default=None, help="load path of model")
+    parser.add_argument("--random_testing", action="store_true", default=False) 
     #parser.add_argument("--coef_target", type=int, default='auto', help="target for coeficient training")
     
 
     return parser.parse_args()
 
-# ENVIRONMENT_NAMES Walker2DPyBulletEnv-v0, AntPyBulletEnv-v0  , HopperBulletEnv-v0 ,  HalfCheetahPyBulletEnv-v0, HumanoidPyBulletEnv-v0, ReacherPyBulletEnv-v0, PusherPyBulletEnv-v0, ThrowerPyBulletEnv-v0
+# python train.py --environment ReacherPyBulletEnv-v0 --model sac --agent a1 --training_ts 1000000 --device-type cuda 
 
-
-# python train.py --environment HopperPyBulletEnv-v0 --model sac --agent a1 --training_ts 1000000 --device-type cuda 
-# python train.py --environment AntPyBulletEnv-v0 --model sac --agent a1 --training_ts 3000000 --device-type cuda 
-
-# similar to reference: HopperPyBulletEnv-v0, AntPyBulletEnv-v0, ReacherPyBulletEnv-v0, PusherPyBulletEnv-v0,  HumanoidPyBulletEnv-v0, HumanoidFlagrunPyBulletEnv-v0, 
-# training time: 1M, 3M, 10M,  10M, 10M, 10M
-# python train.py --environment ReacherPyBulletEnv-v0 --model clac --agent a1 --training_ts 10000 --device-type cuda --random_training
+# training time: 3M for all 
+# ./train.sh a1 HopperPyBulletEnv-v0
+# ./train.sh a1 AntPyBulletEnv-v0
+# ./train.sh a1 HalfCheetahPyBulletEnv-v0
+# ./train.sh a1 Walker2DPyBulletEnv-v0
+# ./train.sh a1 ReacherPyBulletEnv-v0
+# ./train.sh a1 PusherPyBulletEnv-v0
 
 if __name__ == '__main__':
     arglist = parse_args()
