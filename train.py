@@ -98,12 +98,13 @@ def parse_args():
 
     return parser.parse_args()
 
-# python train.py --environment ReacherPyBulletEnv-v0 --model sac --agent a1 --training_ts 1000000 --device-type cuda 
+# python train.py --environment ReacherPyBulletEnv-v0 --model sac --agent a1 --training_ts 1000000 --device_type cuda 
 
 # training time: 3M for all 
 # ./train.sh a1 HopperPyBulletEnv-v0
 # ./train.sh a1 AntPyBulletEnv-v0
 # ./train.sh a1 HalfCheetahPyBulletEnv-v0
+
 # ./train.sh a1 Walker2DPyBulletEnv-v0
 # ./train.sh a1 ReacherPyBulletEnv-v0
 # ./train.sh a1 PusherPyBulletEnv-v0
