@@ -9,6 +9,7 @@ from torch._C import device
 
 from clac import CLAC
 from stable_baselines3 import SAC
+from stable_baselines3.common.logger import configure
 
 
 # parse input arguments 
@@ -35,47 +36,26 @@ def evaluate(model, env, arglist):
         
         if(len(episode_rewards) >= arglist.evaluate_es):
             doneEvaluating = True  
-
-    env.unwrapped.randomize() 
+    
+    if arglist.random_testing: 
+        env.unwrapped.reset_features() 
     return np.mean(episode_rewards)
 
 def train(args):
     env = gym.make(arglist.environment)
+    
+    training_type = 'randomized' if arglist.random_training else 'normal' 
+    save_folder = "./trained_models/" + arglist.environment + "/" + arglist.model + "/" + training_type + "/" + arglist.agent + "/" # each agent gets its own folder 
 
     if(arglist.model == "clac"):
-        model = CLAC("MlpPolicy", env, verbose=1, target_mutual_information="auto", device=arglist.device_type)
+        model = CLAC("MlpPolicy", env, verbose=1, target_mutual_information="auto", device=arglist.device_type, arglist=arglist)
     elif(arglist.model == "sac"):
-        model = SAC("MlpPolicy", env, verbose=1, target_entropy="auto", device=arglist.device_type)
+        model = SAC("MlpPolicy", env, verbose=1, target_entropy="auto", device=arglist.device_type, arglist=arglist)
     
-    rewardsDataFrame = pd.DataFrame()
-    training_type = 'randomized' if arglist.random_training else 'normal' # not implemented yet 
-    save_folder = "./trained_models/" + arglist.environment + "/" + arglist.model + "/" + training_type + "/" + arglist.agent + "/" # each agent gets its own folder 
-    
-    if not arglist.load:
-        training_timestep = 0
-        for _ in range(arglist.training_evals):
-            start_time = time.time()
-            model.learn(total_timesteps= arglist.training_ts / arglist.training_evals, log_interval= arglist.training_ts / arglist.training_evals)
-            training_timestep += arglist.training_ts / arglist.training_evals
-            mean_reward = evaluate(model, env, arglist)
-            print("Mean reward: ", mean_reward, " at training timestep ", training_timestep, " took ", (time.time() - start_time), " seconds") # add time 
-
-            rewardDataPoint = {"Timestep": training_timestep , "Reward": mean_reward, "Model": arglist.model, "Environment": arglist.environment, "Training": training_type}
-            rewardsDataFrame = rewardsDataFrame.append(rewardDataPoint, ignore_index=True)
-
-            if arglist.random_training: 
-                env.unwrapped.randomize()
-
-        model.save(save_folder + "/" + arglist.agent)
-    else:
-        model = model.load(arglist.load_path)
-
-        mean_reward = evaluate(model, env, arglist)
-        rewardDataPoint = {"Episode": arglist.training_ts , "Reward": mean_reward, "Model": arglist.model, "Environment": arglist.environment, "Training": training_type}
-        rewardsDataFrame = rewardsDataFrame.append(rewardDataPoint, ignore_index=True)
-
-    rewardsDataFrame.to_pickle(save_folder + "/data.pkl")
-    print(rewardsDataFrame)
+    new_logger = configure(save_folder, ["stdout", "csv", "tensorboard"])
+    model.set_logger(new_logger)
+    model.learn(total_timesteps= arglist.training_ts, log_interval= 100)
+    model.save(save_folder + "/" + arglist.agent)
 
 def parse_args():
     parser = argparse.ArgumentParser("Reinforcement Learning experiments for multiagent environments")
@@ -84,7 +64,7 @@ def parse_args():
     parser.add_argument("--model", type=str, default="clac", help="model type to train on")
     parser.add_argument("--agent", type=str, default="a1", help="name of agent, for saving results")
     parser.add_argument("--training_ts", type=int, default=1000000, help="number of time steps to train on")
-    parser.add_argument("--training_evals", type=int, default=1000, help="number of time steps to train on")
+    parser.add_argument("--training_evals", type=int, default=1, help="number of time steps to train on")
     parser.add_argument("--random_training", action="store_true", default=False)
     parser.add_argument("--evaluate", action="store_true", default=False)
     parser.add_argument("--evaluate_es", type=int, default=100, help="number of time steps to evaluate trained model")
@@ -98,13 +78,12 @@ def parse_args():
 
     return parser.parse_args()
 
-# python train.py --environment ReacherPyBulletEnv-v0 --model sac --agent a1 --training_ts 1000000 --device_type cuda 
+# python train.py --environment HopperPyBulletEnv-v0 --model clac --agent a1 --training_ts 1000 --device_type cuda 
 
 # training time: 3M for all 
 # ./train.sh a1 HopperPyBulletEnv-v0
 # ./train.sh a1 AntPyBulletEnv-v0
 # ./train.sh a1 HalfCheetahPyBulletEnv-v0
-
 # ./train.sh a1 Walker2DPyBulletEnv-v0
 # ./train.sh a1 ReacherPyBulletEnv-v0
 # ./train.sh a1 PusherPyBulletEnv-v0

@@ -100,6 +100,7 @@ class CLAC(OffPolicyAlgorithm):
         seed: Optional[int] = None,
         device: Union[th.device, str] = "auto",
         _init_setup_model: bool = True,
+        arglist=None 
     ):
 
         super(CLAC, self).__init__(
@@ -128,6 +129,7 @@ class CLAC(OffPolicyAlgorithm):
             use_sde_at_warmup=use_sde_at_warmup,
             optimize_memory_usage=optimize_memory_usage,
             supported_action_spaces=(gym.spaces.Box),
+            arglist=arglist
         )
 
         self.target_mutual_information = target_mutual_information 
@@ -148,7 +150,7 @@ class CLAC(OffPolicyAlgorithm):
         if self.target_mutual_information == "auto":
             # automatically set target mutual information if needed
             # make multiplier a argument? 
-            self.target_mutual_information = -1 * (np.prod(self.env.action_space.shape).astype(np.float32) * np.prod(self.env.observation_space.shape).astype(np.float32))
+            self.target_mutual_information = -1 * (np.prod(self.env.action_space.shape).astype(np.float32) + np.prod(self.env.observation_space.shape).astype(np.float32))
         else:
             # Force conversion
             # this will also throw an error for unexpected string
@@ -269,12 +271,12 @@ class CLAC(OffPolicyAlgorithm):
 
         self._n_updates += gradient_steps
 
-        logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
-        logger.record("train/mi_coef", np.mean(mi_coefs))
-        logger.record("train/actor_loss", np.mean(actor_losses))
-        logger.record("train/critic_loss", np.mean(critic_losses))
+        self.logger.record("train/n_updates", self._n_updates, exclude="tensorboard")
+        self.logger.record("train/mi_coef", np.mean(mi_coefs))
+        self.logger.record("train/actor_loss", np.mean(actor_losses))
+        self.logger.record("train/critic_loss", np.mean(critic_losses))
         if len(mi_coef_losses) > 0:
-            logger.record("train/mi_coef_loss", np.mean(mi_coef_losses))
+            self.logger.record("train/mi_coef_loss", np.mean(mi_coef_losses))
 
     def learn(
         self,
